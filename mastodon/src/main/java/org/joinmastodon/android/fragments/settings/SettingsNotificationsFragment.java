@@ -1,5 +1,8 @@
 package org.joinmastodon.android.fragments.settings;
 
+import static org.joinmastodon.android.MastodonApp.context;
+import static org.unifiedpush.android.connector.UnifiedPush.registerAppWithDialog;
+
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Intent;
@@ -22,8 +25,10 @@ import org.joinmastodon.android.model.viewmodel.ListItem;
 import org.joinmastodon.android.ui.M3AlertDialogBuilder;
 import org.joinmastodon.android.ui.utils.HideableSingleViewRecyclerAdapter;
 import org.joinmastodon.android.ui.utils.UiUtils;
+import org.unifiedpush.android.connector.RegistrationDialogContent;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -44,6 +49,7 @@ public class SettingsNotificationsFragment extends BaseSettingsFragment<Void>{
 
 	private CheckableListItem<Void> mentionsItem, boostsItem, favoritesItem, followersItem, pollsItem;
 	private List<CheckableListItem<Void>> typeItems;
+	private CheckableListItem<Void> unifiedPushItem;
 	private boolean needUpdateNotificationSettings;
 	private boolean notificationsAllowed=true;
 
@@ -62,13 +68,25 @@ public class SettingsNotificationsFragment extends BaseSettingsFragment<Void>{
 				boostsItem=new CheckableListItem<>(R.string.notification_type_reblog, 0, CheckableListItem.Style.CHECKBOX, pushSubscription.alerts.reblog, this::toggleCheckableItem),
 				favoritesItem=new CheckableListItem<>(R.string.notification_type_favorite, 0, CheckableListItem.Style.CHECKBOX, pushSubscription.alerts.favourite, this::toggleCheckableItem),
 				followersItem=new CheckableListItem<>(R.string.notification_type_follow, 0, CheckableListItem.Style.CHECKBOX, pushSubscription.alerts.follow, this::toggleCheckableItem),
-				pollsItem=new CheckableListItem<>(R.string.notification_type_poll, 0, CheckableListItem.Style.CHECKBOX, pushSubscription.alerts.poll, this::toggleCheckableItem)
-		));
+				pollsItem=new CheckableListItem<>(R.string.notification_type_poll, 0, CheckableListItem.Style.CHECKBOX, pushSubscription.alerts.poll, this::toggleCheckableItem),
+				unifiedPushItem=new CheckableListItem<>("UnifiedPush", "enable", CheckableListItem.Style.SWITCH, false, R.drawable.ic_notifications_paused_24px, i->onUnifiedPushClick(false))
+				));
 
 		typeItems=List.of(mentionsItem, boostsItem, favoritesItem, followersItem, pollsItem);
 		pauseItem.checkedChangeListener=checked->onPauseNotificationsClick(true);
 		updatePolicyItem(null);
 		updatePauseItem();
+	}
+
+	private void onUnifiedPushClick(boolean b){
+		registerAppWithDialog(
+				this.getContext(), // Context
+				"default", // instance
+				new RegistrationDialogContent(), // dialogContent
+				new ArrayList<String>(), // features, or ArrayList<String>(Collections.singleton(UnifiedPush.FEATURE_BYTES_MESSAGE)),
+				//    to be sure the distributor handles non-UTF-8 input
+				context.getPackageName() // messageForDistributor
+		);
 	}
 
 	@Override
@@ -104,6 +122,7 @@ public class SettingsNotificationsFragment extends BaseSettingsFragment<Void>{
 			pauseItem.isEnabled=allowed;
 			policyItem.isEnabled=allowed;
 			rebindItem(pauseItem);
+			rebindItem(unifiedPushItem);
 			rebindItem(policyItem);
 			for(CheckableListItem<Void> item:typeItems){
 				item.isEnabled=allowed && ps.policy!=PushSubscription.Policy.NONE;

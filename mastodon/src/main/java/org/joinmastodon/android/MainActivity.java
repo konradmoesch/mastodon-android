@@ -1,5 +1,8 @@
 package org.joinmastodon.android;
 
+import static org.joinmastodon.android.MastodonApp.context;
+import static org.unifiedpush.android.connector.UnifiedPush.registerAppWithDialog;
+
 import android.Manifest;
 import android.app.Application;
 import android.app.Fragment;
@@ -27,8 +30,10 @@ import org.joinmastodon.android.model.SearchResults;
 import org.joinmastodon.android.ui.utils.UiUtils;
 import org.joinmastodon.android.updater.GithubSelfUpdater;
 import org.parceler.Parcels;
+import org.unifiedpush.android.connector.RegistrationDialogContent;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
 import me.grishka.appkit.FragmentStackActivity;
@@ -41,8 +46,18 @@ public class MainActivity extends FragmentStackActivity{
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState){
+		Log.d(TAG, "onCreate");
 		UiUtils.setUserPreferredTheme(this);
 		super.onCreate(savedInstanceState);
+
+		registerAppWithDialog(
+				this, // Context
+				"default", // instance
+				new RegistrationDialogContent(), // dialogContent
+				new ArrayList<String>(), // features, or ArrayList<String>(Collections.singleton(UnifiedPush.FEATURE_BYTES_MESSAGE)),
+				//    to be sure the distributor handles non-UTF-8 input
+				context.getPackageName() // messageForDistributor
+		);
 
 		if(savedInstanceState==null){
 			restartHomeFragment();

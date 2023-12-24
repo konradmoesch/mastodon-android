@@ -105,9 +105,9 @@ public class AccountSessionManager{
 		lastActiveAccountID=session.getID();
 		writeAccountsFile();
 		updateInstanceEmojis(instance, instance.uri);
-		if(PushSubscriptionManager.arePushNotificationsAvailable()){
+		/*if(PushSubscriptionManager.arePushNotificationsAvailable()){
 			session.getPushSubscriptionManager().registerAccountForPush(null);
-		}
+		}*/
 		maybeUpdateShortcuts();
 	}
 

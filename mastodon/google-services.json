@@ -1,0 +1,48 @@
+{
+	"project_info": {
+		"project_number": "940065279395",
+		"project_id": "unifiedpush-test-37b92",
+		"storage_bucket": "unifiedpush-test-37b92.appspot.com"
+	},
+	"client": [
+		{
+			"client_info": {
+				"mobilesdk_app_id": "1:940065279395:android:a906dd9f436c5a1d4d5e16",
+				"android_client_info": {
+					"package_name": "org.joinmastodon.android.debug"
+				}
+			},
+			"oauth_client": [],
+			"api_key": [
+				{
+					"current_key": "AIzaSyAMNDXziAw19I2DIybyTyumkkntYInRtmU"
+				}
+			],
+			"services": {
+				"appinvite_service": {
+					"other_platform_oauth_client": []
+				}
+			}
+		},
+		{
+			"client_info": {
+				"mobilesdk_app_id": "1:940065279395:android:2f9966bd6ae40f334d5e16",
+				"android_client_info": {
+					"package_name": "org.unifiedpush.example.konni"
+				}
+			},
+			"oauth_client": [],
+			"api_key": [
+				{
+					"current_key": "AIzaSyAMNDXziAw19I2DIybyTyumkkntYInRtmU"
+				}
+			],
+			"services": {
+				"appinvite_service": {
+					"other_platform_oauth_client": []
+				}
+			}
+		}
+	],
+	"configuration_version": "1"
+}

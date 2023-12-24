@@ -84,13 +84,21 @@
 		</receiver>
 		<receiver android:exported="true"  android:enabled="true"  android:name=".UnifiedPushNotificationReceiver"
 		android:permission="com.google.android.c2dm.permission.SEND">
-		<intent-filter>
-			<action android:name="org.unifiedpush.android.connector.MESSAGE"/>
-			<action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>
-			<action android:name="org.unifiedpush.android.connector.NEW_ENDPOINT"/>
-			<action android:name="org.unifiedpush.android.connector.REGISTRATION_FAILED"/>
-		</intent-filter>
-	</receiver>
+			<intent-filter>
+				<action android:name="org.unifiedpush.android.connector.MESSAGE"/>
+				<action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>
+				<action android:name="org.unifiedpush.android.connector.NEW_ENDPOINT"/>
+				<action android:name="org.unifiedpush.android.connector.REGISTRATION_FAILED"/>
+			</intent-filter>
+		</receiver>
+		<receiver android:enabled="true"  android:name=".EmbeddedFCMDistributor" android:exported="false">
+			<intent-filter>
+				<action android:name="org.unifiedpush.android.distributor.feature.BYTES_MESSAGE"/>
+				<action android:name="org.unifiedpush.android.distributor.REGISTER"/>
+				<action android:name="org.unifiedpush.android.distributor.UNREGISTER"/>
+			</intent-filter>
+		</receiver>
+
 
 	</application>
 
