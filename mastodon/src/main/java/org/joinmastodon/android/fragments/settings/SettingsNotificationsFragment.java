@@ -2,6 +2,7 @@ package org.joinmastodon.android.fragments.settings;
 
 import static org.joinmastodon.android.MastodonApp.context;
 import static org.unifiedpush.android.connector.UnifiedPush.registerAppWithDialog;
+import static org.unifiedpush.android.connector.UnifiedPush.unregisterApp;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -79,9 +80,10 @@ public class SettingsNotificationsFragment extends BaseSettingsFragment<Void>{
 	}
 
 	private void onUnifiedPushClick(boolean b){
+		unregisterApp(this.getContext(), "default");
 		registerAppWithDialog(
 				this.getContext(), // Context
-				"default", // instance
+				accountID, // instance
 				new RegistrationDialogContent(), // dialogContent
 				new ArrayList<String>(), // features, or ArrayList<String>(Collections.singleton(UnifiedPush.FEATURE_BYTES_MESSAGE)),
 				//    to be sure the distributor handles non-UTF-8 input

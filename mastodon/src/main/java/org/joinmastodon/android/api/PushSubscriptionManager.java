@@ -1,11 +1,7 @@
 package org.joinmastodon.android.api;
 
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -45,7 +41,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -74,16 +69,8 @@ public class PushSubscriptionManager{
 	};
 
 	private static final String TAG="PushSubscriptionManager";
-	public static final String EXTRA_APPLICATION_PENDING_INTENT = "app";
-	public static final String GSF_PACKAGE = "com.google.android.gms";
-	/** Internal parameter used to indicate a 'subtype'. Will not be stored in DB for Nacho. */
-	private static final String EXTRA_SUBTYPE = "subtype";
-	/** Extra used to indicate which senders (Google API project IDs) can send messages to the app */
-	private static final String EXTRA_SENDER = "sender";
-	private static final String EXTRA_SCOPE = "scope";
-	private static final String KID_VALUE="|ID|1|"; // request ID?
 
-	private static String deviceToken;
+	private static String endpoint;
 	private String accountID;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
@@ -93,36 +80,19 @@ public class PushSubscriptionManager{
 		this.accountID=accountID;
 	}
 
-	public static void tryRegisterFCM(){
-		deviceToken=getPrefs().getString("deviceToken", null);
-		int tokenVersion=getPrefs().getInt("version", 0);
-		if(!TextUtils.isEmpty(deviceToken) && tokenVersion==BuildConfig.VERSION_CODE){
-			registerAllAccountsForPush(false);
-			return;
-		}
-		Log.i(TAG, "tryRegisterFCM: no token found or app was updated. Trying to get push token...");
-		Intent intent = new Intent("com.google.iid.TOKEN_REQUEST");
-		intent.setPackage(GSF_PACKAGE);
-		intent.putExtra(EXTRA_APPLICATION_PENDING_INTENT,
-				PendingIntent.getBroadcast(MastodonApp.context, 0, new Intent(), PendingIntent.FLAG_IMMUTABLE));
-		intent.putExtra(EXTRA_SENDER, FCM_SENDER_ID);
-		intent.putExtra(EXTRA_SUBTYPE, FCM_SENDER_ID);
-		intent.putExtra(EXTRA_SCOPE, "*");
-		intent.putExtra("kid", KID_VALUE);
-		MastodonApp.context.sendBroadcast(intent);
-	}
-
 	private static SharedPreferences getPrefs(){
 		return MastodonApp.context.getSharedPreferences("push", Context.MODE_PRIVATE);
 	}
 
 	public static boolean arePushNotificationsAvailable(){
-		return !TextUtils.isEmpty(deviceToken);
+		return !TextUtils.isEmpty(endpoint);
 	}
 
-	public void registerAccountForPush(PushSubscription subscription){
-		if(TextUtils.isEmpty(deviceToken))
-			throw new IllegalStateException("No device push token available");
+	public void registerAccountForPush(PushSubscription subscription, String endpoint){
+		if(TextUtils.isEmpty(PushSubscriptionManager.endpoint) && TextUtils.isEmpty(endpoint))
+			throw new IllegalStateException("No endpoint available");
+		if(!TextUtils.isEmpty(endpoint))
+			PushSubscriptionManager.endpoint=endpoint;
 		MastodonAPIController.runInBackground(()->{
 			Log.d(TAG, "registerAccountForPush: started for "+accountID);
 			String encodedPublicKey, encodedAuthKey, pushAccountID;
@@ -151,7 +121,7 @@ public class PushSubscriptionManager{
 				Log.e(TAG, "registerAccountForPush: error generating encryption key", e);
 				return;
 			}
-			new RegisterForPushNotifications(deviceToken,
+			new RegisterForPushNotifications(PushSubscriptionManager.endpoint,
 					encodedPublicKey,
 					encodedAuthKey,
 					subscription==null ? PushSubscription.Alerts.ofAll() : subscription.alerts,
@@ -166,7 +136,7 @@ public class PushSubscriptionManager{
 									return;
 								session.pushSubscription=result;
 								AccountSessionManager.getInstance().writeAccountsFile();
-								Log.d(TAG, "Successfully registered "+accountID+" for push notifications");
+								Log.d(TAG, "Successfully registered "+accountID+" for push notifications on endpoint "+PushSubscriptionManager.endpoint);
 							});
 						}
 
@@ -197,7 +167,7 @@ public class PushSubscriptionManager{
 					@Override
 					public void onError(ErrorResponse error){
 						if(((MastodonErrorResponse)error).httpStatus==404){ // Not registered for push, register now
-							registerAccountForPush(subscription);
+							registerAccountForPush(subscription, "");
 						}else{
 							AccountSession session=AccountSessionManager.getInstance().tryGetAccount(accountID);
 							if(session==null)
@@ -366,31 +336,9 @@ public class PushSubscriptionManager{
 			return;
 		for(AccountSession session:AccountSessionManager.getInstance().getLoggedInAccounts()){
 			if(session.pushSubscription==null || forceReRegister)
-				session.getPushSubscriptionManager().registerAccountForPush(session.pushSubscription);
+				session.getPushSubscriptionManager().registerAccountForPush(session.pushSubscription, "");
 			else if(session.needUpdatePushSettings)
 				session.getPushSubscriptionManager().updatePushSettings(session.pushSubscription);
-		}
-	}
-
-	public static class RegistrationReceiver extends BroadcastReceiver{
-		@Override
-		public void onReceive(Context context, Intent intent){
-			if("com.google.android.c2dm.intent.REGISTRATION".equals(intent.getAction())){
-				if(intent.hasExtra("registration_id")){
-					deviceToken=intent.getStringExtra("registration_id");
-					if(deviceToken.startsWith(KID_VALUE))
-						deviceToken=deviceToken.substring(KID_VALUE.length()+1);
-					getPrefs().edit().putString("deviceToken", deviceToken).putInt("version", BuildConfig.VERSION_CODE).apply();
-					Log.i(TAG, "Successfully registered for FCM");
-					registerAllAccountsForPush(true);
-				}else{
-					Log.e(TAG, "FCM registration intent did not contain registration_id: "+intent);
-					Bundle extras=intent.getExtras();
-					for(String key:extras.keySet()){
-						Log.i(TAG, key+" -> "+extras.get(key));
-					}
-				}
-			}
 		}
 	}
 }

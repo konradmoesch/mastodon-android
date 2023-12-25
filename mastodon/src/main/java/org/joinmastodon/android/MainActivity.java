@@ -50,15 +50,6 @@ public class MainActivity extends FragmentStackActivity{
 		UiUtils.setUserPreferredTheme(this);
 		super.onCreate(savedInstanceState);
 
-		registerAppWithDialog(
-				this, // Context
-				"default", // instance
-				new RegistrationDialogContent(), // dialogContent
-				new ArrayList<String>(), // features, or ArrayList<String>(Collections.singleton(UnifiedPush.FEATURE_BYTES_MESSAGE)),
-				//    to be sure the distributor handles non-UTF-8 input
-				context.getPackageName() // messageForDistributor
-		);
-
 		if(savedInstanceState==null){
 			restartHomeFragment();
 		}

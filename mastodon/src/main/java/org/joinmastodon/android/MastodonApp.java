@@ -32,7 +32,6 @@ public class MastodonApp extends Application{
 		params.maxMemoryCacheSize=Integer.MAX_VALUE;
 		ImageCache.setParams(params);
 		NetworkUtils.setUserAgent("MastodonAndroid/"+BuildConfig.VERSION_NAME);
-		//PushSubscriptionManager.tryRegisterFCM();
 		GlobalUserPreferences.load();
 		if(BuildConfig.DEBUG){
 			WebView.setWebContentsDebuggingEnabled(true);

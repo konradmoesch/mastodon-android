@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name" translatable="false">Mastodon</string>
+	<string name="app_name" translatable="false">Mastodon Debug</string>
 
 	<string name="log_in">Log in</string>
 	<string name="next">Next</string>
@@ -15,6 +15,7 @@
 	<string name="notifications">Notifications</string>
 
 	<string name="user_followed_you">%s followed you</string>
+	<string name="user_mentioned_you">%s mentioned you</string>
 	<string name="user_sent_follow_request">%s sent you a follow request</string>
 	<string name="user_favorited">%s favorited your post</string>
 	<string name="notification_boosted">%s boosted your post</string>

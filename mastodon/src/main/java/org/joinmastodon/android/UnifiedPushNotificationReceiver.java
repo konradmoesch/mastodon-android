@@ -11,6 +11,14 @@ import org.joinmastodon.android.model.Notification;
 import org.joinmastodon.android.model.PaginatedResponse;
 import org.unifiedpush.android.connector.MessagingReceiver;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+
+import me.grishka.appkit.api.Callback;
+import me.grishka.appkit.api.ErrorResponse;
+
 public class UnifiedPushNotificationReceiver extends MessagingReceiver {
 	private static final String TAG="UnifiedPushNotificationReceiver";
 	public UnifiedPushNotificationReceiver() {
@@ -22,7 +30,7 @@ public class UnifiedPushNotificationReceiver extends MessagingReceiver {
 		Log.d(TAG, "onNewEndpoint: New Endpoint " + endpoint + " for "+ instance);
 		AccountSession account = AccountSessionManager.getInstance().getLastActiveAccount();
 		if (account != null)
-			account.getPushSubscriptionManager().registerAccountForPush(null);
+			account.getPushSubscriptionManager().registerAccountForPush(null, endpoint);
 	}
 
 	@Override
@@ -40,6 +48,29 @@ public class UnifiedPushNotificationReceiver extends MessagingReceiver {
 	@Override
 	public void onMessage(@NotNull Context context, @NotNull byte[] message, @NotNull String instance) {
 		// Called when a new message is received. The message contains the full POST body of the push message
-		Log.d(TAG, "onMessage");
+		Log.d(TAG, "onMessage" +Arrays.toString(message));
+
+		AccountSession account = AccountSessionManager.getInstance().getAccount(instance);
+
+		//this is stupid
+		// Mastodon stores the info to decrypt the message in the HTTP headers, which are not accessible in UnifiedPush,
+		// thus it is not possible to decrypt them. SO we need to re-request them from the server and transform them later on
+		// The official uses fcm and moves the headers to extra data, see
+		// https://github.com/mastodon/webpush-fcm-relay/blob/cac95b28d5364b0204f629283141ac3fb749e0c5/webpush-fcm-relay.go#L116
+		// https://github.com/tuskyapp/Tusky/pull/2303#issue-1112080540
+		account.getCacheController().getNotifications(null, 1, false, false, new Callback<PaginatedResponse<List<Notification>>>(){
+			@Override
+			public void onSuccess(PaginatedResponse<List<Notification>> result){
+				result.items
+						.stream()
+						.findFirst()
+						.ifPresent(value->MastodonAPIController.runInBackground(()->new PushNotificationReceiver().notifyUnifiedPush(context, instance, value)));
+			}
+
+			@Override
+			public void onError(ErrorResponse error){
+				//professional error handling
+			}
+		});
 	}
 }

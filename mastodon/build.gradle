@@ -8,7 +8,7 @@ plugins {
 android {
 	compileSdk 33
 	defaultConfig {
-		applicationId "org.joinmastodon.android"
+		applicationId "org.joinmastodon.android.debug"
 		minSdk 23
 		targetSdk 33
 		versionCode 80
